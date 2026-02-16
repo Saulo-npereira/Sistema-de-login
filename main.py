@@ -10,21 +10,20 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS usuario (
                email VARCHAR(100) PRIMARY KEY,
                senha VARCHAR(100)
                )''')
-
 while True:
     print("""
     1 - Cadastrar usuário
     2 - Listar seu usuário
     3 - Login
     4 - Deletar Usuário
-    5 - Sair
-    
+    5 - Alterar usuário
+    6 - Sair
     """)
 
     while True:
         try:
-            op = int(input('digite um número entre 1 e 5: '))
-            if op>5 or op<1:
+            op = int(input('digite um número entre 1 e 6: '))
+            if op>6 or op<1:
                 raise ValueError
             break
         except ValueError as erro:
@@ -54,6 +53,7 @@ while True:
             usuario = cursor.fetchone()
             print(f"nome = {usuario[0]}\nemail = {usuario[1]}\nsenha = {usuario[2]}")
         except TypeError:
+            os.system('cls')
             print('Usuario não encontrado')
 
     if op==3:
@@ -71,6 +71,7 @@ while True:
                 raise TypeError
             print('usuario logado')
         except TypeError:
+            os.system('cls')
             print('Usuario não encontrado')
         
 
@@ -91,10 +92,49 @@ while True:
                     cursor.execute('DELETE FROM usuario WHERE email = ?', (email_delete,))
                     conexao.commit()
                     print('Usuário deletado')
+                else:
+                    print('Digite a confirmação corretamente')
         except TypeError:
+            os.system('cls')
             print('Usuario não encontrado')
     
     if op == 5:
+        nome_antigo = str(input('digite seu nome: '))
+        email_antigo = str(input('digite seu email: '))
+        senha_antiga = str(input('digite sua senha: '))
+        senha_antiga = hashlib.sha256(senha_antiga.encode()).hexdigest()
+        try:
+            cursor.execute("SELECT * FROM usuario WHERE nome = ? and email = ? and senha = ?", (nome_antigo,
+                                                                                email_antigo, senha_antiga))
+            usuario = cursor.fetchone()
+            if usuario == None:
+                raise TypeError
+            else:
+                os.system('cls')
+                print('usuário encontrado')
+                nome_novo = str(input('digite seu novo nome: '))
+                email_novo = str(input('digite seu novo email: '))
+                senha_nova = str(input('digite sua nova senha: '))
+                senha_nova = hashlib.sha256(senha_nova.encode()).hexdigest()
+                confirmacao = input(f'Para confirmar, digite: {senha_nova[:8]}: ')
+
+                if confirmacao == senha_nova[:8]:
+                    try:
+                        cursor.execute('''UPDATE usuario SET nome = ?, email = ?, senha = ? 
+                                    WHERE email = ?''', 
+                                    (nome_novo, email_novo, senha_nova, email_antigo))
+                        conexao.commit()
+                        print('Usuário Alterado')
+                    except sqlite3.IntegrityError:
+                        print('já existe um usuário com esse email, tente novamente')
+                else:
+                    print('Digite a confirmação corretamente')
+        except TypeError:
+            os.system('cls')
+            print('Usuario não encontrado')
+        
+
+    if op == 6:
         print('saindo...')
         conexao.close()
         break
